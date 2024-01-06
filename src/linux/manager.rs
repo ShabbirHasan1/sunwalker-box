@@ -35,7 +35,7 @@ fn manager_impl(
 
     log!("Manager started");
 
-    let mut runner = running::Runner::new(proc_cgroup).context("Failed to create runner")?;
+    let runner = running::Runner::new(proc_cgroup).context("Failed to create runner")?;
 
     log!("Ready to receive commands");
     channel
@@ -44,12 +44,11 @@ fn manager_impl(
 
     while let Some(command) = channel
         .recv()
-        .context("Failed to receive message from channel")?
+        .context("Failed to receive message from entry channel")?
     {
         channel
             .send(&Ok(Some(entry::Response::from_result(execute_command(
-                command,
-                &mut runner,
+                command, &runner,
             )))))
             .context("Failed to send reply to channel")?
     }
@@ -59,7 +58,7 @@ fn manager_impl(
 
 fn execute_command(
     command: Command,
-    runner: &mut running::Runner,
+    runner: &running::Runner,
 ) -> Result<Option<Box<dyn Serialize>>> {
     log!("Running command {command:?}");
 
@@ -90,6 +89,7 @@ fn execute_command(
                 Exited { exit_code: i32 },
                 Signaled { signal_number: i32 },
                 LimitExceeded { limit: Limit },
+                Suspended { prefork_id: i32 },
             }
 
             #[derive(Serialize)]
@@ -121,6 +121,7 @@ fn execute_command(
                 running::Verdict::MemoryLimitExceeded => Verdict::LimitExceeded {
                     limit: Limit::Memory,
                 },
+                running::Verdict::Suspended(prefork_id) => Verdict::Suspended { prefork_id },
             };
 
             let metrics = Metrics {
