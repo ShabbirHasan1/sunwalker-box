@@ -46,6 +46,7 @@ jobs:
       - name: Tests.
         run: |
           cd $REPO_NAME
+          cat /proc/meminfo
           sudo make test
 
       - uses: actions/upload-artifact@master
