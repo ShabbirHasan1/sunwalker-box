@@ -42,7 +42,7 @@ jobs:
         run: |
           cd $REPO_NAME
 
-          sudo apt install python3 python3-yaml musl-tools libc6-dev
+          sudo apt install make python3 python3-yaml musl-tools libc6-dev
 
           sudo make test
 
