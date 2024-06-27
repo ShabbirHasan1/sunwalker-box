@@ -6,6 +6,7 @@ use anyhow::{Context, Result};
 use crossmist::Object;
 use miniserde::Serialize;
 use miniserde_enum::Serialize_enum;
+use nix::sys::signal;
 use std::path::PathBuf;
 
 #[derive(Debug, Object)]
@@ -34,6 +35,11 @@ fn manager_impl(
     log::enable_diagnostics("manager", log_level);
 
     log!("Manager started");
+
+    // Cancel signal blocking by reaper
+    signal::SigSet::empty()
+        .thread_set_mask()
+        .context("Failed to configure signal mask")?;
 
     let mut runner = running::Runner::new(proc_cgroup).context("Failed to create runner")?;
 
